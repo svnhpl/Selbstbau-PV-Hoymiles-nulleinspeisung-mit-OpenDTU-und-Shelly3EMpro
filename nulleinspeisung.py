@@ -5,14 +5,14 @@ from requests.auth import HTTPBasicAuth
 
 # Diese Daten müssen angepasst werden:
 serial = "112100000000" # Seriennummer des Hoymiles Wechselrichters
-maximum_wr = 300 # Maximale Ausgabe des Wechselrichters
+maximum_wr = 600 # Maximale Ausgabe des Wechselrichters
 minimum_wr = 100 # Minimale Ausgabe des Wechselrichters
 
-dtu_ip = '192.100.100.20' # IP Adresse von OpenDTU
+dtu_ip = '192.168.178.79' # IP Adresse von OpenDTU
 dtu_nutzer = 'admin' # OpenDTU Nutzername
 dtu_passwort = 'openDTU42' # OpenDTU Passwort
 
-shelly_ip = '192.100.100.30' # IP Adresse von Shelly 3EM
+shelly_ip = '192.168.178.94' # IP Adresse von Shelly 3EM
 
 
 while True:
@@ -29,18 +29,17 @@ while True:
     except:
         print('Fehler beim Abrufen der Daten von openDTU')
     try:
-        # Nimmt Daten von der Shelly 3EM Rest-API und übersetzt sie in ein json-Format
-        phase_a     = requests.get(f'http://{shelly_ip}/emeter/0', headers={'Content-Type': 'application/json'}).json()['power']
-        phase_b     = requests.get(f'http://{shelly_ip}/emeter/1', headers={'Content-Type': 'application/json'}).json()['power']
-        phase_c     = requests.get(f'http://{shelly_ip}/emeter/2', headers={'Content-Type': 'application/json'}).json()['power']
-        grid_sum    = phase_a + phase_b + phase_c # Aktueller Bezug - rechnet alle Phasen zusammen
+        # Nimmt Daten von der Shelly 3EM pro Rest-API und übersetzt sie in ein json-Format
+        grid_sum    = requests.get(f'http://{shelly_ip}/rpc/EM.GetStatus?id=0', headers={'Content-Type': 'application/json'}).json()['total_act_power'] # Aktueller Bezug
+        
     except:
-        print('Fehler beim Abrufen der Daten von Shelly 3EM')
+        print('Fehler beim Abrufen der Daten von Shelly 3EM pro')
 
     # Werte setzen
-    print(f'\nBezug: {round(grid_sum, 1)} W, Produktion: {round(power, 1)} W, Verbrauch: {round(grid_sum + power, 1)} W')
+    print(f'\nBezug: {round(grid_sum, 0)} W, Produktion: {round(power, 0)} W, Verbrauch: {round(grid_sum + power, 0)} W')
     if reachable:
         setpoint = grid_sum + altes_limit - 5 # Neues Limit in Watt
+        print(f'neuer Setpoint: {setpoint} W')
 
         # Fange oberes Limit ab
         if setpoint > maximum_wr:
@@ -51,10 +50,11 @@ while True:
             setpoint = minimum_wr
             print(f'Setpoint auf Minimum: {minimum_wr} W')
         else:
-            print(f'Setpoint berechnet: {round(grid_sum, 1)} W + {round(altes_limit, 1)} W - 5 W = {round(setpoint, 1)} W')
+            print(f'Setpoint berechnet: {round(grid_sum, 0)} W + {round(altes_limit, 0)} W - 5 W = {round(setpoint, 0)} W')
 
-        if setpoint != altes_limit:
-            print(f'Setze Inverterlimit von {round(altes_limit, 1)} W auf {round(setpoint, 1)} W... ', end='')
+        if round(setpoint/50,0) != round(altes_limit/50,0):
+        #if setpoint != altes_limit:
+            print(f'Setze Inverterlimit von {round(altes_limit, 0)} W auf {round(setpoint, 0)} W... ', end='')
             # Neues Limit setzen
             try:
                 r = requests.post(
@@ -68,4 +68,4 @@ while True:
                 print('Fehler beim Senden der Konfiguration')
 
     sys.stdout.flush() # write out cached messages to stdout
-    time.sleep(5) # wait
+    time.sleep(10) # wait 
