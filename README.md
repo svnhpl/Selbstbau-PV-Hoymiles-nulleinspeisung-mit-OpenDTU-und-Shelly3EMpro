@@ -4,7 +4,8 @@ Dies ist ein Python-Skript, das den aktuellen Hausverbrauch aus einem Shelly 3EM
 
 Möglich ist auch die Steuerung eines Speichers
 
-![diagramm](media/diagramm.jpg)
+![diagramm](media/bkk_v1.jpg)
+
 
 ## Autoren und Anerkennung
 - Dieses Skript ist ein Fork von: https://github.com/Selbstbau-PV/Selbstbau-PV-Hoymiles-nulleinspeisung-mit-OpenDTU-und-Shelly3EM
